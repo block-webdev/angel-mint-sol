@@ -11,6 +11,10 @@ import {
 } from '../../../contexts/ProductModalContext';
 import { InlineIcon } from '@iconify/react';
 
+import IPFSUtils from '../../../utils/IPFSUtils';
+import { mintNewNFT } from '../../../contexts/helpers';
+import { useWallet } from "@solana/wallet-adapter-react";
+
 // ----------------------------------------------------------------------
 
 const ProductImgStyle = styled('img')({
@@ -30,77 +34,80 @@ ShopProductCard.propTypes = {
 
 export default function ShopProductCard({ product }) {
   const { toggleModal, setNftModalInfo } = useModalContext();
-  const { last_price, listed_price, key_nft, hero_id, content_uri, image_uri, name, owner } = product;
+  // const { last_price, listed_price, key_nft, hero_id, content_uri, image_uri, name, owner } = product;
+  const file = product;
+  const wallet = useWallet();
 
   const onDetailClick = () => {
     console.log("on detail click");
     setNftModalInfo(product);
     toggleModal();
   }
-  /*
-  const onUpdateContent = () => {
-    setNftModalInfo(product);
-    toggleModal();
-  }*/
-  
+
+  // { "name": "Duck Sister #350", "symbol": "Sister", "description": "Duck Sister collection of 3333 NFT. Each duck is unique and is a sister to the Duck BRO!", "seller_fee_basis_points": 1000, "image": "https://www.arweave.net/K9oCZcT5WTMM6LReakfBwZ89unGkPdkkuGin_IUtSWg?ext=png", "external_url": "", "edition": 350, "attributes": [
+  //   { "trait_type": "Background", "value": "Sakura" },
+  //   { "trait_type": "Body", "value": "Beige" },
+  //   { "trait_type": "Beak", "value": "Relaxed" },
+  //   { "trait_type": "Clothing", "value": "Suit of the future" },
+  //   { "trait_type": "Outline", "value": "Outline" },
+  //   { "trait_type": "Hairstyle", "value": "Ponytail" },
+  //   { "trait_type": "Eyes", "value": "Sadness" }
+  // ],
+  // "properties": {
+  //   "files": [{ "uri": "image.png", "type": "image/png" }],
+  //   "category": "image",
+  //   "creators": [{ "address": "3EW3i59cropMTtjsKxPjvwC9dwCmwU1Dcbe2uuwE8DLW", "share": 100 }] 
+  // }
+  // }
+
+
+  const onMintClick = () => {
+    IPFSUtils.uploadFileToIPFS([file]).then((lists) => {
+      if (lists.length > 0) {
+        const content_uri1 = {
+          name: 'Angel1',
+          symbol: 'angel1',
+          image: lists[0],
+          properties: {
+            files: [{ uri: "image.png", type: "image/png" }],
+            category: "image",
+          }
+        }
+
+        IPFSUtils.uploadTextToIPFS(content_uri1).then((path) => {
+          console.log('============== uri', path);
+          mintNewNFT({ name: 'Angel', content_uri: path }, wallet);
+        })
+      }
+    });
+  }
 
   return (
     <Card>
-        {
-        <Link pt={1} href={owner === null || owner === undefined ? "#":"https://solscan.io/account/" + owner.toBase58() + "?cluster=devnet"} target="_blank" underline="none">
-            <Typography variant="subtitle2" noWrap mt={2} style={{textAlign: 'left'}} >
-            <Button variant="outlined" style={{width: '100%'}}>owner: { owner ? decoratePubKey(owner) : '----' }</Button>
-            </Typography>
-          
-        </Link>
-        }
-        
+      <Typography variant="subtitle2" noWrap mt={2} ml={1} style={{ textAlign: 'left' }} >
+        NFT art
+      </Typography>
+
       <Box sx={{ pt: '100%', position: 'relative' }}>
 
-        <Link href={image_uri} target="_blank">
-          <ProductImgStyle alt={name} src={image_uri} />
+        <Link href={''} target="_blank">
+          <ProductImgStyle alt={''} src={URL.createObjectURL(file)} />
         </Link>
       </Box>
 
       <Stack spacing={1} sx={{ p: 3 }}>
 
-        <Typography component="div" variant="subtitle2">
-            Seat #{hero_id+1}
-        </Typography>
-
-        <Link href={key_nft == undefined ? '#': "https://solscan.io/account/" + key_nft.toBase58() + "?cluster=devnet"} target="_blank">
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="subtitle2" noWrap>
-            {name}
-            </Typography>
-            <Typography variant="subtitle2">
-              <InlineIcon icon="bi:arrow-right"/>
-            </Typography>
-          </Stack>
-        </Link>
-
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography variant="subtitle1">
-            <Typography
-              component="span"
-              variant="body1"
-              sx={{
-                color: 'text.disabled',
-                textDecoration: 'line-through'
-              }}
-            >
-              {getFormattedPrice(last_price ) + " SOL"}
-            </Typography>
-            &nbsp;
-            {getFormattedPrice(listed_price) + " SOL"}
+            0.7 SOL
           </Typography>
         </Stack>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Button
             variant="contained"
-            onClick={() => {onDetailClick()}}
+            onClick={() => { onMintClick() }}
           >
-              Details
+            Mint
           </Button>
         </Stack>
       </Stack>

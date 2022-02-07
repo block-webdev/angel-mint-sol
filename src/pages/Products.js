@@ -36,39 +36,36 @@ export default function EcommerceShop() {
     setModalOpened(!modalOpened);
   }
   const [nftModalInfo, setNftModalInfo] = useState({});
+  const updateData1 = () => {
 
-  useEffect(() => {
-    getFullContents().then((arrRecords) => {
-      setContents(arrRecords);
-    });
-  }, []);
-
-  const updateData = (
-    hero_id, listed_price, content_uri, owner 
-  ) => {
-    console.log("updateData ", hero_id, listed_price, content_uri, owner);
-    let tempContents = contents;
-    tempContents[hero_id].listed_price = listed_price;
-    tempContents[hero_id].owner = owner;
-    if (contents[hero_id].content_uri !== content_uri) {
-      console.log("updateData content_uri not same");
-      getContent(tempContents[hero_id]).then((tempRecord) => {
-        tempContents[hero_id] = tempRecord;
-        console.log("updateData content_uri fetched", tempRecord);
-        setContents(tempContents);
-      });
-    } else {    
-      tempContents[hero_id].content_uri = content_uri;
-      setContents(tempContents);
-    } 
-    /*getFullContents().then((arrRecords) => {
-      console.log("updateDAta =", arrRecords);
-      console.log(arrRecords[2].listed_price.toNumber());
-      console.log(getFormattedPrice(arrRecords[2].listed_price));
-      setContents(arrRecords);
-    });*/
-    
   }
+
+  // useEffect(() => {
+  //   getFullContents().then((arrRecords) => {
+  //     console.log('===========', arrRecords);
+  //     setContents(arrRecords);
+  //   });
+  // }, []);
+
+  // const updateData = (
+  //   hero_id, listed_price, content_uri, owner 
+  // ) => {
+  //   console.log("updateData ", hero_id, listed_price, content_uri, owner);
+  //   let tempContents = contents;
+  //   tempContents[hero_id].listed_price = listed_price;
+  //   tempContents[hero_id].owner = owner;
+  //   if (contents[hero_id].content_uri !== content_uri) {
+  //     console.log("updateData content_uri not same");
+  //     getContent(tempContents[hero_id]).then((tempRecord) => {
+  //       tempContents[hero_id] = tempRecord;
+  //       console.log("updateData content_uri fetched", tempRecord);
+  //       setContents(tempContents);
+  //     });
+  //   } else {    
+  //     tempContents[hero_id].content_uri = content_uri;
+  //     setContents(tempContents);
+  //   } 
+  // }
 
   return (
     <ModalContext.Provider 
@@ -79,11 +76,11 @@ export default function EcommerceShop() {
         nftModalInfo,
         isDetailModal,
         setIsDetailModal,
-        updateData,
+        updateData1,
         contents
       }}>
-      <Page title="Dashboard: Products | Minimal-UI" ml={5}>
-          <Stack
+      <Page title="Dashboard" ml={5}>
+          {/* <Stack
             direction="row"
             flexWrap="wrap-reverse"
             alignItems="center"
@@ -92,7 +89,7 @@ export default function EcommerceShop() {
             <Stack direction="row" spacing={1} flexShrink={0} sx={{ my: 1 }}>
               <ProductSort />
             </Stack>
-          </Stack>
+          </Stack> */}
 
           <ProductList/>
           <TransitionsModal/>

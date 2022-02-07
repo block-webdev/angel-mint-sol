@@ -626,3 +626,98 @@ export async function createMetadata(
 
   return metadataAccount;
 }
+
+
+export async function createMasterEdition(
+  maxSupply: BN | undefined,
+  mintKey: StringPublicKey,
+  updateAuthorityKey: StringPublicKey,
+  mintAuthorityKey: StringPublicKey,
+  payer: StringPublicKey,
+  instructions: TransactionInstruction[],
+) {
+  const metadataProgramId = programIds().metadata;
+
+  const metadataAccount = (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from(METADATA_PREFIX),
+        toPublicKey(metadataProgramId).toBuffer(),
+        toPublicKey(mintKey).toBuffer(),
+      ],
+      toPublicKey(metadataProgramId),
+    )
+  )[0];
+
+  const editionAccount = (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from(METADATA_PREFIX),
+        toPublicKey(metadataProgramId).toBuffer(),
+        toPublicKey(mintKey).toBuffer(),
+        Buffer.from(EDITION),
+      ],
+      toPublicKey(metadataProgramId),
+    )
+  )[0];
+
+  const value = new CreateMasterEditionArgs({ maxSupply: maxSupply || null });
+  const data = Buffer.from(serialize(METADATA_SCHEMA, value));
+
+  const keys = [
+    {
+      pubkey: toPublicKey(editionAccount),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(mintKey),
+      isSigner: false,
+      isWritable: true,
+    },
+    {
+      pubkey: toPublicKey(updateAuthorityKey),
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(mintAuthorityKey),
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(payer),
+      isSigner: true,
+      isWritable: false,
+    },
+    {
+      pubkey: toPublicKey(metadataAccount),
+      isSigner: false,
+      isWritable: false,
+    },
+
+    {
+      pubkey: programIds().token,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: SystemProgram.programId,
+      isSigner: false,
+      isWritable: false,
+    },
+    {
+      pubkey: SYSVAR_RENT_PUBKEY,
+      isSigner: false,
+      isWritable: false,
+    },
+  ];
+
+  instructions.push(
+    new TransactionInstruction({
+      keys,
+      programId: toPublicKey(metadataProgramId),
+      data,
+    }),
+  );
+}
