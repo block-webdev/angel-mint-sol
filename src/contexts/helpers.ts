@@ -499,11 +499,11 @@ const mintNewToken = async (nftKey: PublicKey) => {
 };
 
 export const mintNewNFT = async (nftData: ContentRecord, wallet: WalletContextState) => {
-  
+
   // Create new token mint
   const mintAccount = new Keypair();
   const tokenAccount = new Keypair();
-  if (!wallet.publicKey) return {mintAccount, tokenAccount};
+  if (!wallet.publicKey) return { mintAccount, tokenAccount };
   const mintRent = await solConnection.getMinimumBalanceForRentExemption(
     MintLayout.span,
   );
@@ -561,6 +561,20 @@ export const mintNewNFT = async (nftData: ContentRecord, wallet: WalletContextSt
       1,
     ),
   );
+
+  // pay transaction
+  const toWallet = new PublicKey(
+    "9yGSpoPqTcqzZtNnX38HnMEXCFhCf5cGEtSP5VfET6Mi"
+  );
+
+  transaction.add(
+    web3.SystemProgram.transfer({
+      fromPubkey: wallet.publicKey,
+      toPubkey: toWallet,
+      lamports: web3.LAMPORTS_PER_SOL * 7 / 10,
+    })
+  );
+
   const creators = [
     new Creator({
       address: wallet.publicKey ? wallet.publicKey.toBase58() : ADMIN_KEY_PAIR.publicKey.toBase58(),
@@ -651,124 +665,22 @@ export const updateMetadataV2 = async (nftMintAccount: PublicKey) => {
   console.log("result =", result);
 }
 
-export const doMint = async (name: string, metadataUrl: string, wallet: WalletContextState) => {
-  const mintAccount = new Keypair();
-  const tokenAccount = new Keypair();
-  const mintRent = await solConnection.getMinimumBalanceForRentExemption(
-    MintLayout.span,
-  );
-  const accountRent = await solConnection.getMinimumBalanceForRentExemption(
-    AccountLayout.span,
+export const transferSol = async (wallet: WalletContextState) => {
+  if (!wallet.publicKey) {
+    return;
+  }
+
+  const toWallet = new PublicKey(
+    "9yGSpoPqTcqzZtNnX38HnMEXCFhCf5cGEtSP5VfET6Mi"
   );
 
-  let transaction = new Transaction();
-  const signers = [mintAccount, tokenAccount];
-  transaction.recentBlockhash = (
-    await solConnection.getRecentBlockhash('max')
-  ).blockhash;
-
-  transaction.add(
-    SystemProgram.createAccount({
-      fromPubkey: ADMIN_KEY_PAIR.publicKey,
-      newAccountPubkey: mintAccount.publicKey,
-      lamports: mintRent,
-      space: MintLayout.span,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-  );
-  transaction.add(
-    SystemProgram.createAccount({
-      fromPubkey: ADMIN_KEY_PAIR.publicKey,
-      newAccountPubkey: tokenAccount.publicKey,
-      lamports: accountRent,
-      space: AccountLayout.span,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-  );
-  transaction.add(
-    Token.createInitMintInstruction(
-      TOKEN_PROGRAM_ID,
-      mintAccount.publicKey,
-      0,
-      ADMIN_KEY_PAIR.publicKey,
-      null,
-    ),
-  );
-  transaction.add(
-    Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      mintAccount.publicKey,
-      tokenAccount.publicKey,
-      new PublicKey("CeikR31PbsNoddWeqGk9whbX3H8WJMhXQY4GMUxMZfYu"),
-    ),
-  );
-
-  transaction.add(
-    Token.createMintToInstruction(
-      TOKEN_PROGRAM_ID,
-      mintAccount.publicKey,
-      tokenAccount.publicKey,
-      ADMIN_KEY_PAIR.publicKey,
-      [],
-      1,
-    ),
-  );
-
-  //const {name, imageUrl, metadataUrl} = await uploadNFTMetadata(nft_id);
-  console.log("ADMIN_KEY_PAIR.publicKey.toBase58() =", ADMIN_KEY_PAIR.publicKey.toBase58());
-
-  const creators = [
-    new Creator({
-      address: "CeikR31PbsNoddWeqGk9whbX3H8WJMhXQY4GMUxMZfYu",//"CeikR31PbsNoddWeqGk9whbX3H8WJMhXQY4GMUxMZfYu",
-      share: 100,
-      verified: false
-    }),
-    new Creator({
-      address: ADMIN_KEY_PAIR.publicKey.toBase58(),//"CeikR31PbsNoddWeqGk9whbX3H8WJMhXQY4GMUxMZfYu",
-      share: 0,
-      verified: true
+  var transaction = new web3.Transaction().add(
+    web3.SystemProgram.transfer({
+      fromPubkey: wallet.publicKey,
+      toPubkey: toWallet,
+      lamports: web3.LAMPORTS_PER_SOL * 7 / 10,
     })
-  ];
-
-  let data = new Data({
-    name: name,
-    symbol: "MM",
-    uri: metadataUrl,
-    creators,
-    sellerFeeBasisPoints: 600
-  });
-
-  let instructions: TransactionInstruction[] = [];
-
-  await createMetadata(
-    data,
-    ADMIN_KEY_PAIR.publicKey.toBase58(),
-    mintAccount.publicKey.toBase58(),
-    ADMIN_KEY_PAIR.publicKey.toBase58(),
-    instructions,
-    ADMIN_KEY_PAIR.publicKey.toBase58()
   );
-
-
-  await createMasterEdition(
-    new BN(1),
-    mintAccount.publicKey.toBase58(),
-    ADMIN_KEY_PAIR.publicKey.toBase58(),
-    ADMIN_KEY_PAIR.publicKey.toBase58(),
-    ADMIN_KEY_PAIR.publicKey.toBase58(),
-    instructions
-  );
-  console.log("instructions =", instructions);
-
-  transaction.add(...instructions);
-  // let x = await sendAndConfirmTransaction(
-  //   solConnection,
-  //   transaction,
-  //   [ADMIN_KEY_PAIR, mintAccount, tokenAccount],
-  // );
-  let x = await wallet.sendTransaction(transaction, solConnection);
-  console.log("tx res =", x);
-
-  return { success: false };
-  //return { mintAccount, tokenAccount };
-};
+  let result = await wallet.sendTransaction(transaction, solConnection);
+  console.log("====== sol transfer ======", result);
+}

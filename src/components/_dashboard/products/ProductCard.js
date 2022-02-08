@@ -14,6 +14,7 @@ import { InlineIcon } from '@iconify/react';
 import IPFSUtils from '../../../utils/IPFSUtils';
 import { mintNewNFT } from '../../../contexts/helpers';
 import { useWallet } from "@solana/wallet-adapter-react";
+import { toast } from 'react-toastify';
 
 // ----------------------------------------------------------------------
 
@@ -62,6 +63,34 @@ export default function ShopProductCard({ product }) {
 
 
   const onMintClick = () => {
+    if (!wallet || !wallet.publicKey) {
+      toast.error('Connect your Wallet', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        type: toast.TYPE.ERROR,
+        theme: 'colored'
+      });
+      return;
+    }
+
+
+    toast.success('Waiting...', {
+      position: "bottom-left",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      type: toast.TYPE.INFO,
+      theme: 'colored'
+    });
+
     IPFSUtils.uploadFileToIPFS([file]).then((lists) => {
       if (lists.length > 0) {
         const content_uri1 = {
@@ -75,8 +104,19 @@ export default function ShopProductCard({ product }) {
         }
 
         IPFSUtils.uploadTextToIPFS(content_uri1).then((path) => {
-          console.log('============== uri', path);
-          mintNewNFT({ name: 'Angel', content_uri: path }, wallet);
+          mintNewNFT({ name: 'Angel', content_uri: path }, wallet).then(() => {
+            toast.success('Succeed', {
+              position: "bottom-left",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              type: toast.TYPE.SUCCESS,
+              theme: 'colored'
+            });
+          });
         })
       }
     });
